@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Answering Bot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e60050; /* Vibrant pink/magenta */
+            --primary-hover: #cc0047;
+            --bg-color: #fdfafb; /* Very light background */
+            --card-bg: #ffffff;
+            --text-color: #0f172a; /* Dark navy text */
+            --text-muted: #64748b;
+            --border-color: rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .background-blobs {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            opacity: 0.5;
+            border-radius: 50%;
+            animation: float 10s infinite alternate;
+        }
+
+        .blob-1 {
+            top: -10%;
+            left: -10%;
+            width: 40vw;
+            height: 40vw;
+            background: rgba(230, 0, 80, 0.15);
+            animation-delay: 0s;
+        }
+
+        .blob-2 {
+            bottom: -10%;
+            right: -10%;
+            width: 35vw;
+            height: 35vw;
+            background: rgba(15, 23, 42, 0.1);
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(20px, 40px) scale(1.1); }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, max-width 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.12);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            text-align: left;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        p.subtitle {
+            text-align: left;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        .file-upload-wrapper {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+
+        .file-upload-wrapper:hover {
+            border-color: var(--primary);
+            background: rgba(230, 0, 80, 0.05);
+        }
+
+        .file-upload-wrapper.dragover {
+            border-color: var(--primary);
+            background: rgba(230, 0, 80, 0.1);
+            transform: scale(1.02);
+        }
+
+        .file-upload-wrapper input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .file-name {
+            font-size: 0.85rem;
+            color: var(--primary);
+            margin-top: 0.5rem;
+            font-weight: 600;
+            word-break: break-all;
+            text-align: center;
+            padding: 0 1rem;
+        }
+
+        textarea, input, select {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 1rem;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        button {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px var(--primary);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: rgba(0,0,0,0.5);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #result {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #result p {
+            color: #34d399;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            margin-top: 0;
+            width: auto;
+        }
+
+        .download-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4);
+        }
+
+        .error-msg {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="container">
+        <h1>RFP Compliance Response Bot</h1>
+        <p class="subtitle">This bot is helpful in answering the compliance queries received in an RFP.<br>Please ensure your file strictly follows the expected format shown below.</p>
+
+        <div style="background: rgba(15, 23, 42, 0.03); border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 2rem; font-size: 0.85rem; color: var(--text-color);">
+            <strong style="color: var(--primary); display: block; margin-bottom: 0.5rem;">Expected Excel Format:</strong>
+            <p style="margin-bottom: 0.5rem;">Please upload this file in this exact format only:</p>
+            <table style="width: 100%; border-collapse: collapse; text-align: left; background: #fff; border-radius: 6px; overflow: hidden;">
+                <thead>
+                    <tr style="background: #000080; color: white;">
+                        <th style="padding: 6px; border: 1px solid #cbd5e1;">A (Sr. No)</th>
+                        <th style="padding: 6px; border: 1px solid #cbd5e1;">B (Questions)</th>
+                        <th style="padding: 6px; border: 1px solid #cbd5e1;">C (Type)</th>
+                        <th style="padding: 6px; border: 1px solid #cbd5e1;">D (Response)</th>
+                        <th style="padding: 6px; border: 1px solid #cbd5e1;">E (Comments)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">1.1</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">Does the system support...</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">Single Choice</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">Comply</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">Existing context...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <form id="uploadForm">
+            <div class="form-row" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <div style="flex: 1;">
+                    <label for="providerSelect" style="margin-bottom: 0.2rem;">API Provider</label>
+                    <select id="providerSelect" name="api_provider" style="width: 100%; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.4rem 0.5rem; color: var(--text-color); font-family: inherit; font-size: 0.85rem; height: 35px; min-height: auto; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
+                        <option value="gemini">Gemini</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="claude">Claude (Anthropic)</option>
+                        <option value="openrouter">OpenRouter</option>
+                    </select>
+                </div>
+                
+                <div style="flex: 1;">
+                    <label for="apiKeyInput" style="margin-bottom: 0.2rem;">API Key</label>
+                    <input type="password" id="apiKeyInput" name="form_api_key" placeholder="Enter your API key..." required style="width: 100%; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.4rem 0.5rem; color: var(--text-color); font-family: inherit; font-size: 0.85rem; height: 35px; min-height: auto; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
+                </div>
+            </div>
+
+            <div class="form-row" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <div style="flex: 1;">
+                    <label for="makerModelSelect" style="margin-bottom: 0.2rem;">Maker Agent Model</label>
+                    <select id="makerModelSelect" name="maker_model" style="width: 100%; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.4rem 0.5rem; color: var(--text-color); font-family: inherit; font-size: 0.85rem; height: 35px; min-height: auto; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
+                    </select>
+                </div>
+                
+                <div style="flex: 1;">
+                    <label for="reviewerModelSelect" style="margin-bottom: 0.2rem;">Reviewer Agent Model</label>
+                    <select id="reviewerModelSelect" name="reviewer_model" style="width: 100%; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.4rem 0.5rem; color: var(--text-color); font-family: inherit; font-size: 0.85rem; height: 35px; min-height: auto; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>RFP Excel File</label>
+                <div class="file-upload-wrapper" id="dropZone">
+                    <div class="file-icon">📄</div>
+                    <span id="fileText">Drag & drop your .xlsx file here or click to browse</span>
+                    <input type="file" id="fileInput" name="file" accept=".xlsx" required>
+                    <div class="file-name" id="fileName"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="promptInput">Custom Instructions (Optional)</label>
+                <textarea id="promptInput" name="custom_prompt" placeholder="E.g., Prioritize concise answers, or provide special context for this specific RFP..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" id="submitBtn" style="margin-top: 0; flex: 1;">
+                    <span id="btnText">Process RFP</span>
+                    <div class="loader" id="loader"></div>
+                </button>
+                <button type="button" id="stopBtn" style="margin-top: 0; flex: 0.3; background: #64748b; display: none;">
+                    Stop
+                </button>
+            </div>
+            
+            <div class="error-msg" id="errorMsg"></div>
+        </form>
+
+        <div id="result">
+            <p>Processing Complete!</p>
+            <p id="tokensUsed" style="color: var(--text-color); font-size: 1rem; margin-bottom: 1rem; font-weight: normal;"></p>
+            
+            <!-- Summary Table will be injected here -->
+            
+            <a href="#" id="downloadLink" class="download-btn">Download Output File</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const fileText = document.getElementById('fileText');
+        const fileName = document.getElementById('fileName');
+        const submitBtn = document.getElementById('submitBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const btnText = document.getElementById('btnText');
+        const loader = document.getElementById('loader');
+        const resultDiv = document.getElementById('result');
+        const downloadLink = document.getElementById('downloadLink');
+        const errorMsg = document.getElementById('errorMsg');
+        
+        let currentTaskId = null;
+
+        const modelsByProvider = {
+            gemini: [
+                { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (Default)' },
+                { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+                { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+                { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' }
+            ],
+            openai: [
+                { value: 'gpt-4o', label: 'GPT-4o (Default)' },
+                { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+                { value: 'o1-mini', label: 'o1 Mini' },
+                { value: 'o3-mini', label: 'o3 Mini' }
+            ],
+            claude: [
+                { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (Default)' },
+                { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku' },
+                { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' }
+            ],
+            openrouter: [
+                { value: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash (Free/Low Cost)' },
+                { value: 'deepseek/deepseek-chat', label: 'DeepSeek V3' },
+                { value: 'deepseek/deepseek-r1', label: 'DeepSeek R1' },
+                { value: 'poolside/laguna-m.1:free', label: 'Laguna M.1 (Free)' },
+                { value: 'nvidia/nemotron-3-super-120b-a12b:free', label: 'Nemotron 120B (Free)' },
+                { value: 'openrouter/owl-alpha', label: 'OWL Alpha (Free)' },
+                { value: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Llama 3.3 70B (Free)' },
+                { value: 'meta-llama/llama-3.1-8b-instruct:free', label: 'Llama 3.1 8B (Free)' },
+                { value: 'qwen/qwen-2.5-coder-32b-instruct:free', label: 'Qwen 2.5 Coder 32B (Free)' },
+                { value: 'google/gemini-2.5-flash-free', label: 'Gemini 2.5 Flash (Free)' },
+                { value: 'google/gemini-2.5-pro-free', label: 'Gemini 2.5 Pro (Free)' },
+                { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet' },
+                { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
+                { value: 'openai/gpt-4o', label: 'GPT-4o' }
+            ]
+        };
+
+        const providerSelect = document.getElementById('providerSelect');
+        const makerModelSelect = document.getElementById('makerModelSelect');
+        const reviewerModelSelect = document.getElementById('reviewerModelSelect');
+
+        function updateModelDropdowns() {
+            const provider = providerSelect.value;
+            makerModelSelect.innerHTML = '';
+            reviewerModelSelect.innerHTML = '';
+            
+            modelsByProvider[provider].forEach(model => {
+                makerModelSelect.add(new Option(model.label, model.value));
+                reviewerModelSelect.add(new Option(model.label, model.value));
+            });
+        }
+
+        providerSelect.addEventListener('change', updateModelDropdowns);
+        updateModelDropdowns(); // Call once on load
+
+        stopBtn.addEventListener('click', async () => {
+            if (currentTaskId) {
+                try {
+                    await fetch(`/cancel/${currentTaskId}`, { method: 'POST' });
+                    btnText.textContent = 'Stopping...';
+                    stopBtn.disabled = true;
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+        });
+
+        // Drag and Drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('dragover');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            if(files.length) {
+                fileInput.files = files;
+                updateFileName();
+            }
+        }, false);
+
+        fileInput.addEventListener('change', updateFileName);
+
+        function updateFileName() {
+            if (fileInput.files.length > 0) {
+                fileText.style.display = 'none';
+                fileName.textContent = fileInput.files[0].name;
+            } else {
+                fileText.style.display = 'block';
+                fileName.textContent = '';
+            }
+        }
+
+        // Form Submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!fileInput.files.length) {
+                showError("Please select an Excel file.");
+                return;
+            }
+
+            // UI State loading
+            submitBtn.disabled = true;
+            btnText.textContent = 'Processing (This may take a while)...';
+            loader.style.display = 'block';
+            resultDiv.style.display = 'none';
+            errorMsg.style.display = 'none';
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    showError(data.error || "An error occurred during upload.");
+                    restoreUI();
+                    return;
+                }
+
+                currentTaskId = data.task_id;
+                stopBtn.style.display = 'block';
+                stopBtn.disabled = false;
+                pollStatus(currentTaskId);
+            } catch (err) {
+                showError("Network error during upload. Please try again.");
+                console.error(err);
+                restoreUI();
+            }
+        });
+
+        async function pollStatus(taskId) {
+            try {
+                const res = await fetch(`/status/${taskId}`);
+                const statusData = await res.json();
+
+                if (statusData.status === 'completed') {
+                    downloadLink.href = statusData.download_url;
+                    downloadLink.download = statusData.filename;
+                    btnText.textContent = 'Processing Complete (100%)';
+                    
+                    let highConf = 0, medConf = 0, lowConf = 0;
+                    if (statusData.results) {
+                        for (const rowNum in statusData.results) {
+                            const conf = statusData.results[rowNum].confidence;
+                            if (conf === 'high') highConf++;
+                            else if (conf === 'medium') medConf++;
+                            else lowConf++;
+                        }
+                    }
+
+                    const tokensElement = document.getElementById('tokensUsed');
+                    if (tokensElement) {
+                        tokensElement.innerHTML = `
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; background: #fff; padding: 1.5rem; border-radius: 8px; border: 1px solid #cbd5e1; text-align: left;">
+                                <div style="grid-column: span 2; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; font-weight: bold; color: var(--primary);">Processing Summary</div>
+                                
+                                <div><strong>Maker Model:</strong> ${statusData.maker_model || 'Unknown'}</div>
+                                <div><strong>Reviewer Model:</strong> ${statusData.reviewer_model || 'Unknown'}</div>
+
+                                <div><strong>Questions Processed:</strong> ${statusData.questions_processed || 0}</div>
+                                <div><strong>Total Tokens:</strong> ${statusData.total_tokens || 0}</div>
+                                
+                                <div><strong>High Confidence:</strong> <span style="color: #10b981;">${highConf}</span></div>
+                                <div><strong>Time Taken:</strong> ${statusData.time_taken || 0} seconds</div>
+                                
+                                <div><strong>Medium Confidence:</strong> <span style="color: #f59e0b;">${medConf}</span></div>
+                                <div style="color: #059669; font-size: 1.1em;"><strong>Est. Cost:</strong> $${statusData.cost_incurred || 0}</div>
+                                
+                                <div><strong>Low Confidence:</strong> <span style="color: #ef4444;">${lowConf}</span></div>
+                            </div>
+                        `;
+                    }
+                    
+                    resultDiv.style.display = 'block';
+                    restoreUI();
+                } else if (statusData.status === 'error') {
+                    showError(statusData.error || "An error occurred during processing.");
+                    restoreUI();
+                } else if (statusData.status === 'processing') {
+                    btnText.textContent = `Processing... (${statusData.progress}%)`;
+                    setTimeout(() => pollStatus(taskId), 2000); // Poll every 2 seconds
+                }
+            } catch (err) {
+                showError("Network error while checking status.");
+                console.error(err);
+                restoreUI();
+            }
+        }
+
+        function restoreUI() {
+            submitBtn.disabled = false;
+            stopBtn.style.display = 'none';
+            currentTaskId = null;
+            if (btnText.textContent.indexOf('Complete') === -1) {
+                btnText.textContent = 'Process RFP';
+            }
+            loader.style.display = 'none';
+        }
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

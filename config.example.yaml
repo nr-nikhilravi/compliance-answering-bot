@@ -1,0 +1,44 @@
+# RFP Auto-Responder — Configuration Example
+# Copy this file to config.yaml and adjust as needed.
+# CLI: python -m rfp_responder --config config.yaml
+
+paths:
+  source_corpus: "D:/AI Knowledge/Complaince Answering Bot/Existing knowledge/Compliances"
+  input_excel_folder: "D:/AI Knowledge/Complaince Answering Bot/Input Excel"
+  output_excel_folder: "D:/AI Knowledge/Complaince Answering Bot/Output Excel"
+  cache_folder: "D:/AI Knowledge/Complaince Answering Bot/.rag_cache"
+
+excel:
+  question_sheet_name: "Technical (App)"   # sheet to write answers into
+  preserve_sheets: ["Tracker"]             # sheets copied through unchanged
+  header_row: 2                            # row containing column headers
+  data_start_row: 5                        # first data row
+  no_column: "B"                           # question number column
+  question_column: "C"                     # question text column
+  type_column: "D"                         # Single Choice / Comment
+  response_column: "E"                     # Yes/No/Partial/N/A (Single Choice only)
+  comments_column: "F"                     # answer prose written here
+
+vendor:
+  name: "BusinessNext"
+  description: "banking-focused CRM SaaS vendor headquartered in India"
+  region_focus: "BFSI across India, Middle East, and Asia-Pacific"
+
+customer:
+  name: "Maybank"
+  context: "tier-1 Malaysian bank regulated by Bank Negara Malaysia under RMiT 2020"
+
+models:
+  maker: "gemini-2.5-pro"          # high-quality drafting model
+  reviewer: "gemini-2.5-flash"     # fast/cheap review model
+  embeddings: "text-embedding-004"
+
+retrieval:
+  top_k: 10            # chunks retrieved per question
+  low_threshold: 0.30  # below this → skip reviewer (no source to validate against)
+  high_threshold: 0.75 # above this + high maker confidence → skip reviewer
+
+orchestration:
+  max_revisions: 1                    # HARD CAP: maker revises at most once
+  per_question_token_budget: 6000     # circuit breaker (tokens across maker + reviewer)
+  skip_reviewer_on_high_confidence: true

@@ -1,0 +1,1 @@
+BusinessNext supports multi-tenancy through logical data isolation per tenant. Each tenant's data is stored in a separate schema within the shared database. The platform is deployed on AWS and supports private cloud (on-premise) as well. Data at rest is encrypted using AES-256. Data in transit uses TLS 1.2+.

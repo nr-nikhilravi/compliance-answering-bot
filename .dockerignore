@@ -1,0 +1,11 @@
+.git
+__pycache__
+*.pyc
+.pytest_cache
+.rag_cache
+Output Excel/*
+Input Excel/*
+tests/
+venv/
+env/
+.env
