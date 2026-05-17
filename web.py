@@ -49,11 +49,13 @@ from starlette.requests import Request
 import openpyxl
 
 # In-memory dictionary to store task status
-TASKS = {}
+import asyncio
+import threading
+from fastapi.responses import StreamingResponse
+import json
 
 @app.post("/process")
 async def process_file(
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     custom_prompt: Optional[str] = Form(None),
     form_api_key: Optional[str] = Form(None),
@@ -65,7 +67,6 @@ async def process_file(
     if not api_key:
         return {"error": "API Key is not set. Please provide it in the form."}
 
-    # Save uploaded file
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     input_filename = f"upload_{timestamp}_{file.filename}"
     input_path = UPLOAD_DIR / input_filename
@@ -74,30 +75,31 @@ async def process_file(
     with open(input_path, "wb") as f:
         f.write(content)
 
-    task_id = str(uuid.uuid4())
-    TASKS[task_id] = {"status": "processing", "progress": 0, "filename": "", "download_url": "", "error": ""}
+    queue = asyncio.Queue()
+    loop = asyncio.get_running_loop()
 
-    # Add the heavy workload to background tasks
-    background_tasks.add_task(
-        _process_heavy_task, task_id, input_path, api_key, custom_prompt, api_provider, maker_model, reviewer_model
-    )
-    
-    return {"task_id": task_id}
+    def background_worker():
+        try:
+            _process_heavy_task(queue, loop, input_path, api_key, custom_prompt, api_provider, maker_model, reviewer_model)
+        except Exception as e:
+            asyncio.run_coroutine_threadsafe(queue.put({"status": "error", "error": str(e)}), loop)
 
-@app.get("/status/{task_id}")
-async def get_status(task_id: str):
-    if task_id not in TASKS:
-        return JSONResponse(status_code=404, content={"error": "Task not found"})
-    return TASKS[task_id]
+    thread = threading.Thread(target=background_worker)
+    thread.start()
 
-@app.post("/cancel/{task_id}")
-async def cancel_task(task_id: str):
-    if task_id in TASKS:
-        TASKS[task_id]['cancelled'] = True
-        return {"status": "cancelled"}
-    return {"error": "Task not found"}
+    async def stream_generator():
+        while True:
+            msg = await queue.get()
+            yield json.dumps(msg) + "\n"
+            if msg.get("status") in ("completed", "error"):
+                break
 
-def _process_heavy_task(task_id, input_path, api_key, custom_prompt, api_provider, form_maker_model, form_reviewer_model):
+    return StreamingResponse(stream_generator(), media_type="application/x-ndjson")
+
+
+def _process_heavy_task(queue, loop, input_path, api_key, custom_prompt, api_provider, form_maker_model, form_reviewer_model):
+    def send_update(msg):
+        asyncio.run_coroutine_threadsafe(queue.put(msg), loop)
     try:
         start_time = time.time()
         cfg = load_config(BASE_DIR / "config.yaml")
@@ -154,14 +156,7 @@ def _process_heavy_task(task_id, input_path, api_key, custom_prompt, api_provide
         total_tokens = 0
         total_questions = len(question_rows)
         for i, rfp_row in enumerate(question_rows):
-            if TASKS.get(task_id, {}).get("cancelled", False):
-                TASKS[task_id]["status"] = "error"
-                TASKS[task_id]["error"] = "Processing stopped by user."
-                return
-
-            # Update progress
-            progress = int((i / total_questions) * 100)
-            TASKS[task_id]["progress"] = progress
+            send_update({"status": "processing", "progress": int((i / total_questions) * 100)})
             try:
                 q_embedding = embed_client.embed_query(rfp_row.question_text)
                 retrieved = retrieve(q_embedding, chunk_embeddings, chunks, top_k=cfg.retrieval.top_k)
@@ -207,31 +202,33 @@ def _process_heavy_task(task_id, input_path, api_key, custom_prompt, api_provide
 
         write_output_excel(input_path, output_path, results, cfg)
 
-        TASKS[task_id]["status"] = "completed"
-        TASKS[task_id]["progress"] = 100
-        TASKS[task_id]["filename"] = out_name
-        TASKS[task_id]["download_url"] = f"/download/{out_name}"
-        TASKS[task_id]["total_tokens"] = total_tokens
-        TASKS[task_id]["results"] = results
-        
         elapsed = time.time() - start_time
-        TASKS[task_id]["time_taken"] = round(elapsed, 1)
-        TASKS[task_id]["maker_model"] = maker_model
-        TASKS[task_id]["reviewer_model"] = reviewer_model
+        time_taken = round(elapsed, 1)
         
         is_free = "free" in maker_model.lower() and "free" in reviewer_model.lower()
         if is_free:
-            TASKS[task_id]["cost_incurred"] = "0.00"
+            cost_incurred = "0.00"
         elif api_provider == "gemini" and "2.5-pro" in maker_model:
-            TASKS[task_id]["cost_incurred"] = round((total_tokens / 1000000) * 14.0, 4)
+            cost_incurred = str(round((total_tokens / 1000000) * 14.0, 4))
         else:
-            TASKS[task_id]["cost_incurred"] = "Varies (See Provider)"
-            
-        TASKS[task_id]["questions_processed"] = total_questions
+            cost_incurred = "Varies (See Provider)"
+
+        send_update({
+            "status": "completed",
+            "progress": 100,
+            "filename": out_name,
+            "download_url": f"/download/{out_name}",
+            "total_tokens": total_tokens,
+            "results": results,
+            "time_taken": time_taken,
+            "maker_model": maker_model,
+            "reviewer_model": reviewer_model,
+            "cost_incurred": cost_incurred,
+            "questions_processed": total_questions
+        })
 
     except Exception as e:
-        TASKS[task_id]["status"] = "error"
-        TASKS[task_id]["error"] = str(e)
+        send_update({"status": "error", "error": str(e)})
 
 
 

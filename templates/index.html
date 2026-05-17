@@ -478,18 +478,16 @@
             });
         }
 
+        let abortController = null;
+
         providerSelect.addEventListener('change', updateModelDropdowns);
         updateModelDropdowns(); // Call once on load
 
-        stopBtn.addEventListener('click', async () => {
-            if (currentTaskId) {
-                try {
-                    await fetch(`/cancel/${currentTaskId}`, { method: 'POST' });
-                    btnText.textContent = 'Stopping...';
-                    stopBtn.disabled = true;
-                } catch(e) {
-                    console.error(e);
-                }
+        stopBtn.addEventListener('click', () => {
+            if (abortController) {
+                abortController.abort();
+                btnText.textContent = 'Stopping...';
+                stopBtn.disabled = true;
             }
         });
 
@@ -553,90 +551,100 @@
             errorMsg.style.display = 'none';
 
             const formData = new FormData(form);
+            abortController = new AbortController();
 
             try {
                 const response = await fetch('/process', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    signal: abortController.signal
                 });
 
-                const data = await response.json();
-
-                if (!response.ok || data.error) {
-                    showError(data.error || "An error occurred during upload.");
+                if (!response.ok) {
+                    showError("An error occurred during upload or processing.");
                     restoreUI();
                     return;
                 }
 
-                currentTaskId = data.task_id;
                 stopBtn.style.display = 'block';
                 stopBtn.disabled = false;
-                pollStatus(currentTaskId);
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunks = decoder.decode(value, {stream: true}).split('\n');
+                    for (const chunk of chunks) {
+                        if (!chunk.trim()) continue;
+                        try {
+                            const statusData = JSON.parse(chunk);
+                            
+                            if (statusData.status === 'processing') {
+                                btnText.textContent = `Processing... (${statusData.progress || 0}%)`;
+                            } else if (statusData.status === 'completed') {
+                                downloadLink.href = statusData.download_url;
+                                downloadLink.download = statusData.filename;
+                                btnText.textContent = 'Processing Complete (100%)';
+                                
+                                let highConf = 0, medConf = 0, lowConf = 0;
+                                if (statusData.results) {
+                                    for (const rowNum in statusData.results) {
+                                        const conf = statusData.results[rowNum].confidence;
+                                        if (conf === 'high') highConf++;
+                                        else if (conf === 'medium') medConf++;
+                                        else lowConf++;
+                                    }
+                                }
+
+                                const tokensElement = document.getElementById('tokensUsed');
+                                if (tokensElement) {
+                                    tokensElement.innerHTML = `
+                                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; background: #fff; padding: 1.5rem; border-radius: 8px; border: 1px solid #cbd5e1; text-align: left;">
+                                            <div style="grid-column: span 2; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; font-weight: bold; color: var(--primary);">Processing Summary</div>
+                                            
+                                            <div><strong>Maker Model:</strong> ${statusData.maker_model || 'Unknown'}</div>
+                                            <div><strong>Reviewer Model:</strong> ${statusData.reviewer_model || 'Unknown'}</div>
+
+                                            <div><strong>Questions Processed:</strong> ${statusData.questions_processed || 0}</div>
+                                            <div><strong>Total Tokens:</strong> ${statusData.total_tokens || 0}</div>
+                                            
+                                            <div><strong>High Confidence:</strong> <span style="color: #10b981;">${highConf}</span></div>
+                                            <div><strong>Time Taken:</strong> ${statusData.time_taken || 0} seconds</div>
+                                            
+                                            <div><strong>Medium Confidence:</strong> <span style="color: #f59e0b;">${medConf}</span></div>
+                                            <div style="color: #059669; font-size: 1.1em;"><strong>Est. Cost:</strong> $${statusData.cost_incurred || 0}</div>
+                                            
+                                            <div><strong>Low Confidence:</strong> <span style="color: #ef4444;">${lowConf}</span></div>
+                                        </div>
+                                    `;
+                                }
+                                
+                                resultDiv.style.display = 'block';
+                                restoreUI();
+                                return;
+                            } else if (statusData.status === 'error') {
+                                showError(statusData.error || "An error occurred during processing.");
+                                restoreUI();
+                                return;
+                            }
+                        } catch(e) {
+                            // Ignore JSON parse errors for incomplete chunks
+                        }
+                    }
+                }
             } catch (err) {
-                showError("Network error during upload. Please try again.");
-                console.error(err);
+                if (err.name === 'AbortError') {
+                    showError("Processing stopped by user.");
+                } else {
+                    showError("Network error during processing. Please try again.");
+                    console.error(err);
+                }
                 restoreUI();
             }
         });
-
-        async function pollStatus(taskId) {
-            try {
-                const res = await fetch(`/status/${taskId}`);
-                const statusData = await res.json();
-
-                if (statusData.status === 'completed') {
-                    downloadLink.href = statusData.download_url;
-                    downloadLink.download = statusData.filename;
-                    btnText.textContent = 'Processing Complete (100%)';
-                    
-                    let highConf = 0, medConf = 0, lowConf = 0;
-                    if (statusData.results) {
-                        for (const rowNum in statusData.results) {
-                            const conf = statusData.results[rowNum].confidence;
-                            if (conf === 'high') highConf++;
-                            else if (conf === 'medium') medConf++;
-                            else lowConf++;
-                        }
-                    }
-
-                    const tokensElement = document.getElementById('tokensUsed');
-                    if (tokensElement) {
-                        tokensElement.innerHTML = `
-                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; background: #fff; padding: 1.5rem; border-radius: 8px; border: 1px solid #cbd5e1; text-align: left;">
-                                <div style="grid-column: span 2; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; font-weight: bold; color: var(--primary);">Processing Summary</div>
-                                
-                                <div><strong>Maker Model:</strong> ${statusData.maker_model || 'Unknown'}</div>
-                                <div><strong>Reviewer Model:</strong> ${statusData.reviewer_model || 'Unknown'}</div>
-
-                                <div><strong>Questions Processed:</strong> ${statusData.questions_processed || 0}</div>
-                                <div><strong>Total Tokens:</strong> ${statusData.total_tokens || 0}</div>
-                                
-                                <div><strong>High Confidence:</strong> <span style="color: #10b981;">${highConf}</span></div>
-                                <div><strong>Time Taken:</strong> ${statusData.time_taken || 0} seconds</div>
-                                
-                                <div><strong>Medium Confidence:</strong> <span style="color: #f59e0b;">${medConf}</span></div>
-                                <div style="color: #059669; font-size: 1.1em;"><strong>Est. Cost:</strong> $${statusData.cost_incurred || 0}</div>
-                                
-                                <div><strong>Low Confidence:</strong> <span style="color: #ef4444;">${lowConf}</span></div>
-                            </div>
-                        `;
-                    }
-                    
-                    resultDiv.style.display = 'block';
-                    restoreUI();
-                } else if (statusData.status === 'error') {
-                    showError(statusData.error || "An error occurred during processing.");
-                    restoreUI();
-                } else if (statusData.status === 'processing') {
-                    btnText.textContent = `Processing... (${statusData.progress}%)`;
-                    setTimeout(() => pollStatus(taskId), 2000); // Poll every 2 seconds
-                }
-            } catch (err) {
-                showError("Network error while checking status.");
-                console.error(err);
-                restoreUI();
-            }
-        }
 
         function restoreUI() {
             submitBtn.disabled = false;
