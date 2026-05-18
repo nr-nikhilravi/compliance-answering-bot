@@ -49,10 +49,13 @@ def _format_context(chunks: list[RetrievedChunk]) -> str:
 def _parse_output(raw: str) -> Optional[MakerOutput]:
     """Parse and validate JSON output from maker. Returns None on failure."""
     raw = raw.strip()
-    # Strip markdown fences if model added them
-    if raw.startswith("```"):
-        lines = raw.splitlines()
-        raw = "\n".join(lines[1:-1] if lines[-1].startswith("```") else lines[1:])
+    
+    # Try to extract just the JSON object if there's conversational text
+    start_idx = raw.find('{')
+    end_idx = raw.rfind('}')
+    if start_idx != -1 and end_idx != -1 and end_idx >= start_idx:
+        raw = raw[start_idx:end_idx + 1]
+
     try:
         data = json.loads(raw)
         return MakerOutput.model_validate(data)
