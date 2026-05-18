@@ -49,7 +49,7 @@ class ComparerAgent:
                 ],
                 temperature=0.1,
             )
-            text = response.choices[0].message.content.strip()
+            text = (response.choices[0].message.content or "").strip()
             if "rework" in text.lower():
                 result = "Rework"
             else:
