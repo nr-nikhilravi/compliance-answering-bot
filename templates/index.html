@@ -4,662 +4,1080 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compliance Answering Bot</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #e60050; /* Vibrant pink/magenta */
-            --primary-hover: #cc0047;
-            --bg-color: #fdfafb; /* Very light background */
-            --card-bg: #ffffff;
-            --text-color: #0f172a; /* Dark navy text */
-            --text-muted: #64748b;
-            --border-color: rgba(0,0,0,0.1);
+        :root {
+            /* Light Theme Base */
+            --bg-base: #f8fafc;      /* Crisp light gray/white base */
+            
+            /* Glass Panels */
+            --bg-panel: rgba(255, 255, 255, 0.85); 
+            --bg-panel-hover: rgba(255, 255, 255, 1);
+            --border-color: rgba(0, 0, 0, 0.08);
+            
+            /* Typography */
+            --text-main: #0f172a;    /* Deep slate/black */
+            --text-muted: #64748b;   /* Soft slate gray */
+            
+            /* Businessnext Palette (Soft Fuchsia & Lavender) */
+            --primary: #d946ef;      /* Softer Fuchsia */
+            --primary-light: #f472b6; /* Soft Pink */
+            --sunrise-gradient: linear-gradient(135deg, #f472b6, #c084fc);
+            
+            /* Status Colors */
+            --danger: #ff453a;       /* Apple Red */
+            --success: #32d74b;      /* Apple Green */
+            --info: #0a84ff;         /* Apple Blue */
+            
+            /* Ultra Smooth Edges */
+            --radius-sm: 12px;
+            --radius-md: 24px;
+            --radius-lg: 36px;
+            --radius-pill: 50px;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-color);
-            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+            background: var(--bg-base);
+            color: var(--text-main);
             min-height: 100vh;
+            padding: 3rem 2rem;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            padding: 2rem;
+            position: relative;
             overflow-x: hidden;
+            letter-spacing: 0.2px;
         }
 
-        .background-blobs {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -1;
-        }
-
-        .blob {
-            position: absolute;
-            filter: blur(80px);
-            opacity: 0.5;
+        /* Breathtaking Sunrise Orbs - Easy on the eyes */
+        .bg-orb {
+            position: fixed;
             border-radius: 50%;
-            animation: float 10s infinite alternate;
+            filter: blur(120px);
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.6; /* Higher opacity but softer colors */
         }
-
-        .blob-1 {
-            top: -10%;
-            left: -10%;
-            width: 40vw;
-            height: 40vw;
-            background: rgba(230, 0, 80, 0.15);
-            animation-delay: 0s;
+        .orb-1 { 
+            width: 600px; height: 600px; 
+            background: #fbcfe8; /* Very soft pink */
+            top: -150px; right: -10%; 
+            animation: float 14s infinite alternate ease-in-out; 
         }
-
-        .blob-2 {
-            bottom: -10%;
-            right: -10%;
-            width: 35vw;
-            height: 35vw;
-            background: rgba(15, 23, 42, 0.1);
-            animation-delay: -5s;
+        .orb-2 { 
+            width: 700px; height: 700px; 
+            background: #e9d5ff; /* Very soft lavender */
+            bottom: -200px; left: -10%; 
+            animation: float 18s infinite alternate-reverse ease-in-out; 
         }
-
+        .orb-3 { 
+            width: 400px; height: 400px; 
+            background: #fecdd3; /* Very soft rose */
+            top: 40%; left: 30%; 
+            opacity: 0.5;
+            animation: float 20s infinite alternate ease-in-out; 
+        }
+        
         @keyframes float {
             0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(20px, 40px) scale(1.1); }
+            100% { transform: translate(-40px, 60px) scale(1.05); }
         }
 
         .container {
             width: 100%;
-            max-width: 600px;
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            max-width: 1100px; /* Slightly narrower for elegance */
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            z-index: 1;
+        }
+
+        /* Glassmorphism Shared Utilities */
+        .glass-panel {
+            background: var(--bg-panel);
             border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 3rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-            transform: translateY(0);
-            transition: transform 0.3s ease, box-shadow 0.3s ease, max-width 0.3s ease;
+            border-radius: var(--radius-md);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .glass-panel:hover {
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
         }
 
-        .container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.12);
+        /* Top Nav */
+        .top-nav {
+            display: flex;
+            gap: 3rem;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
         }
-
-        h1 {
-            font-size: 2.2rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-            color: var(--text-color);
-            text-align: left;
-            border-bottom: 3px solid var(--primary);
-            padding-bottom: 0.5rem;
-            display: inline-block;
-        }
-
-        p.subtitle {
-            text-align: left;
+        .nav-item {
             color: var(--text-muted);
-            margin-bottom: 2.5rem;
-            font-size: 0.95rem;
-            margin-top: 0.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--text-color);
-        }
-
-        .file-upload-wrapper {
+            font-size: 1rem;
+            font-weight: 500;
+            padding-bottom: 0.5rem;
+            cursor: default;
             position: relative;
-            width: 100%;
-            height: 120px;
-            border: 2px dashed var(--border-color);
-            border-radius: 16px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #f8fafc;
+            gap: 0.5rem;
+            transition: color 0.4s;
         }
-
-        .file-upload-wrapper:hover {
-            border-color: var(--primary);
-            background: rgba(230, 0, 80, 0.05);
+        .nav-item.active {
+            color: var(--text-main);
+            font-weight: 600;
         }
-
-        .file-upload-wrapper.dragover {
-            border-color: var(--primary);
-            background: rgba(230, 0, 80, 0.1);
-            transform: scale(1.02);
-        }
-
-        .file-upload-wrapper input[type="file"] {
+        .nav-item.active::after {
+            content: '';
             position: absolute;
+            bottom: -1rem;
+            left: 0;
             width: 100%;
+            height: 3px;
+            background: var(--sunrise-gradient);
+            border-radius: 3px 3px 0 0;
+            box-shadow: 0 -2px 10px rgba(232, 28, 255, 0.4);
+        }
+        
+        /* Page Sections */
+        .page-section {
+            display: none;
+            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .page-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dashboard Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            padding: 1.8rem 1rem;
+            text-align: center;
+            border-radius: var(--radius-lg);
+        }
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 300;
+            margin-bottom: 0.3rem;
+            font-feature-settings: "tnum";
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* Progress Section */
+        .progress-section {
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: rgba(0,0,0,0.06);
+            border-radius: var(--radius-pill);
+            overflow: hidden;
+            margin-bottom: 2rem;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .progress-bar-fill {
             height: 100%;
+            background: var(--sunrise-gradient);
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 0 15px rgba(232, 28, 255, 0.5);
+            border-radius: var(--radius-pill);
+        }
+        
+        /* Configuration Grid */
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .panel {
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+        }
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Forms */
+        .form-row {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.2rem;
+        }
+        .form-group {
+            flex: 1;
+            margin-bottom: 1.2rem;
+        }
+        label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.6rem;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.85rem 1rem;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(232, 28, 255, 0.15);
+            background: #ffffff;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        select option {
+            background: #ffffff;
+            color: var(--text-main);
+        }
+
+        /* Drag & Drop */
+        .file-drop {
+            border: 2px dashed rgba(0,0,0,0.15);
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: var(--radius-md);
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .file-drop:hover, .file-drop.dragover {
+            border-color: var(--primary-light);
+            background: rgba(232, 28, 255, 0.05);
+            transform: translateY(-2px);
+        }
+        .file-drop input[type="file"] {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
             opacity: 0;
             cursor: pointer;
         }
 
-        .file-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            color: var(--text-muted);
-        }
-
-        .file-name {
-            font-size: 0.85rem;
-            color: var(--primary);
-            margin-top: 0.5rem;
-            font-weight: 600;
-            word-break: break-all;
-            text-align: center;
-            padding: 0 1rem;
-        }
-
-        textarea, input, select {
-            width: 100%;
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 12px;
-            padding: 1rem;
-            color: var(--text-color);
-            font-family: inherit;
-            font-size: 0.95rem;
-            resize: vertical;
-            min-height: 100px;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-        }
-
-        button {
-            width: 100%;
-            background: var(--primary);
-            color: white;
+        /* Buttons */
+        .btn-start {
+            background: var(--sunrise-gradient);
+            color: #0f172a; /* Dark slate text for readability */
             border: none;
-            border-radius: 12px;
-            padding: 1rem;
-            font-size: 1rem;
-            font-weight: 600;
+            padding: 1rem 2.5rem;
+            border-radius: var(--radius-pill);
+            font-size: 1.05rem;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            margin-top: 2rem;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -10px var(--primary);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .loader {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: rgba(0,0,0,0.5);
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        #result {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            border-radius: 12px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            text-align: center;
-            display: none;
-            animation: fadeIn 0.5s ease forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        #result p {
-            color: #34d399;
-            margin-bottom: 1rem;
-            font-weight: 600;
-        }
-
-        .download-btn {
-            display: inline-block;
-            background: #10b981;
-            color: white;
-            text-decoration: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            margin-top: 0;
-            width: auto;
-        }
-
-        .download-btn:hover {
-            background: #059669;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4);
-        }
-
-        .error-msg {
-            color: #f87171;
-            background: rgba(248, 113, 113, 0.1);
-            border: 1px solid rgba(248, 113, 113, 0.2);
-            padding: 1rem;
-            border-radius: 8px;
             margin-top: 1rem;
-            display: none;
-            font-size: 0.9rem;
+            box-shadow: 0 8px 25px rgba(232, 28, 255, 0.3);
+            letter-spacing: 0.5px;
+        }
+        .btn-start:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(232, 28, 255, 0.4);
+            filter: brightness(1.05);
+        }
+        .btn-start:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: rgba(0,0,0,0.05);
+            box-shadow: none;
+            color: var(--text-muted) !important;
+        }
+        
+        .btn-stop {
+            background: rgba(251, 113, 133, 0.1); /* Rose tint */
+            color: var(--danger);
+            border: 1px solid rgba(251, 113, 133, 0.3);
+            padding: 0.75rem 2rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-stop:hover {
+            background: var(--danger);
+            color: white;
+            box-shadow: 0 0 20px rgba(251, 113, 133, 0.4);
+            border-color: var(--danger);
         }
 
-        .table-container {
-            max-height: 400px;
+        /* Activity Log */
+        .activity-log {
+            padding: 2rem;
+            margin-top: 1.5rem;
+            min-height: 200px;
+            max-height: 350px;
             overflow-y: auto;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-radius: var(--radius-lg);
+            line-height: 1.6;
+        }
+        .log-entry { margin-bottom: 0.8rem; }
+        .log-time { color: var(--primary-light); opacity: 0.8; margin-right: 0.8rem; font-weight: 500; }
+        
+        /* Review Page */
+        .review-panel {
+            padding: 4rem 3rem;
+            text-align: center;
+            margin-top: 2rem;
+            border-radius: var(--radius-lg);
+        }
+        .review-icon {
+            font-size: 4.5rem;
             margin-bottom: 1.5rem;
-            border-radius: 8px;
+            animation: float-icon 3s infinite ease-in-out;
+        }
+        @keyframes float-icon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        .download-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: var(--sunrise-gradient);
+            color: #0f172a;
+            text-decoration: none;
+            padding: 1.2rem 3rem;
+            border-radius: var(--radius-pill);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 2.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(232, 28, 255, 0.3);
+            letter-spacing: 0.5px;
+        }
+        .download-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(232, 28, 255, 0.4);
+            filter: brightness(1.05);
+        }
+        
+        /* Header Alert */
+        .header-alert {
+            background: rgba(251, 113, 133, 0.05); /* Very soft rose */
+            border: 1px solid rgba(251, 113, 133, 0.2);
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 2rem;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+        .header-alert-title {
+            display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--primary); margin-bottom: 0.8rem;
+            font-size: 1rem;
+        }
+        .header-alert-col {
+            background: rgba(0, 0, 0, 0.04); 
+            padding: 0.4rem 0.8rem; 
+            border-radius: var(--radius-sm); 
+            border: 1px solid rgba(0,0,0,0.08);
+            font-weight: 500;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.03);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.15);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,0,0,0.25);
         }
     </style>
 </head>
 <body>
 
-    <div class="background-blobs">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
+<!-- Breathtaking Sunrise background orbs -->
+<div class="bg-orb orb-1"></div>
+<div class="bg-orb orb-2"></div>
+<div class="bg-orb orb-3"></div>
+
+<div class="container">
+    
+    <div style="display: flex; align-items: center; margin-bottom: 1rem; margin-top: 1rem;">
+        <div style="background: rgba(217, 70, 239, 0.1); color: var(--primary); font-weight: 800; font-size: 1.6rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 14px; margin-right: 1.2rem; border: 2px solid rgba(217, 70, 239, 0.3); box-shadow: 0 4px 15px rgba(217, 70, 239, 0.15);">R</div>
+        <div>
+            <h1 style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.04em;">RFP Compliance Response <span style="color: var(--primary);">Agent</span></h1>
+            <p style="font-size: 0.85rem; color: var(--primary-light); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin-top: 0.3rem;">By Businessnext</p>
+        </div>
+    </div>
+    
+    <div class="top-nav">
+        <div class="nav-item active" id="nav-setup">⚙️ Setup</div>
+        <div class="nav-item" id="nav-process">✨ Process</div>
+        <div class="nav-item" id="nav-review">📋 Review</div>
+        <div class="nav-item" id="nav-history">🕒 History</div>
     </div>
 
-    <div class="container">
-        <h1>RFP Compliance Response Bot</h1>
-        <p class="subtitle">This bot is helpful in answering the compliance queries received in an RFP.<br>Please ensure your file strictly follows the expected format shown below.</p>
+    <form id="uploadForm">
+        <!-- ================= SETUP PAGE ================= -->
+        <div id="page-setup" class="page-section active">
+            <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.6; max-width: 850px; margin-bottom: 2rem; font-weight: 300;">
+                Streamline your proposal evaluation workflows. This intelligent assistant automatically analyzes complex compliance queries against your source documentation to generate precise, audit-ready responses in seconds.
+            </p>
 
-        <div style="background: rgba(15, 23, 42, 0.03); border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 2rem; font-size: 0.85rem; color: var(--text-color);">
-            <strong style="color: var(--primary); display: block; margin-bottom: 0.5rem;">Expected Excel Format:</strong>
-            <p style="margin-bottom: 0.5rem;">Please upload this file in this exact format only:</p>
-            <table style="width: 100%; border-collapse: collapse; text-align: left; background: #fff; border-radius: 6px; overflow: hidden;">
+            <div class="header-alert">
+                <div class="header-alert-title">
+                    <span>⚠️</span> Formatting Requirement
+                </div>
+                <p style="font-size: 0.9rem; color: #881337; line-height: 1.5; margin-bottom: 1rem; font-weight: 500;">
+                    To ensure maximum parsing accuracy and model performance, please verify that your uploaded file strictly adheres to the expected format outlined below:
+                </p>
+                <div style="display: flex; gap: 0.8rem; font-size: 0.8rem; color: var(--text-main); flex-wrap: wrap;">
+                    <span class="header-alert-col">A (Sr. No)</span>
+                    <span class="header-alert-col">B (Questions)</span>
+                    <span class="header-alert-col">C (Type)</span>
+                    <span class="header-alert-col">D (Response)</span>
+                    <span class="header-alert-col">E (Comments)</span>
+                </div>
+            </div>
+
+            <div class="config-grid">
+                <!-- File Upload -->
+                <div class="panel glass-panel">
+                    <div class="panel-title">📄 Drop CSV/XLSX</div>
+                    <div class="file-drop" id="dropZone">
+                        <div style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.9;">📊</div>
+                        <div id="fileText" style="font-size: 0.9rem; color: var(--text-muted); font-weight: 400;">
+                            Drop your .xlsx file here or click to browse
+                        </div>
+                        <div id="fileName" style="font-size: 0.95rem; color: var(--primary-light); font-weight: 600; margin-top: 1rem;"></div>
+                        <input type="file" id="fileInput" name="file" accept=".xlsx" required>
+                    </div>
+                </div>
+                
+                <!-- Custom Instructions -->
+                <div class="panel glass-panel">
+                    <div class="panel-title">⚙️ Configuration Options</div>
+                    <div class="form-group">
+                        <label>Custom Instructions (Optional)</label>
+                        <textarea name="custom_prompt" placeholder="E.g., Prioritize concise answers..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration -->
+            <div class="panel glass-panel" style="margin-top: 1.5rem;">
+                <div class="panel-title">⚙️ Model & Client Configuration</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>API Provider</label>
+                        <select id="providerSelect" name="api_provider">
+                            <option value="gemini">Gemini</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="claude">Claude (Anthropic)</option>
+                            <option value="openrouter">OpenRouter</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>API Key</label>
+                        <input type="password" name="form_api_key" placeholder="Enter API key...">
+                    </div>
+                    <div class="form-group">
+                        <label>Bank / Client</label>
+                        <select name="customer">
+                            <option value="Maybank">Maybank</option>
+                            <option value="RHB">RHB</option>
+                            <option value="Bank of Baroda">Bank of Baroda</option>
+                            <option value="LIC">LIC</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom: 0;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Maker Model</label>
+                        <select id="makerModelSelect" name="maker_model"></select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Reviewer Model</label>
+                        <select id="reviewerModelSelect" name="reviewer_model"></select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="submit" id="submitBtn" class="btn-start">
+                    ✨ Start Processing
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= PROCESS PAGE ================= -->
+        <div id="page-process" class="page-section">
+            <div class="stats-grid">
+                <div class="stat-card glass-panel">
+                    <div class="stat-value" id="statTotal" style="color: var(--text-main);">0</div>
+                    <div class="stat-label">TOTAL</div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-value" id="statComplete" style="color: var(--success);">0</div>
+                    <div class="stat-label">COMPLETE</div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-value" id="statErrors" style="color: var(--danger);">0</div>
+                    <div class="stat-label">ERRORS</div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-value" id="statRemaining" style="color: var(--info);">0</div>
+                    <div class="stat-label">REMAINING</div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-value" id="statEta" style="color: var(--primary-light); font-size: 1.8rem; line-height: 2.6rem;">--:--</div>
+                    <div class="stat-label">ETA</div>
+                </div>
+            </div>
+
+            <div class="progress-section glass-panel">
+                <div class="progress-header">
+                    <span>Overall Progress</span>
+                    <span id="progressText" style="color: var(--primary-light); font-weight: 600;">0% (0 / 0)</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+                
+                <div style="display: flex; gap: 1.5rem; align-items: center;">
+                    <button type="button" id="stopBtn" class="btn-stop" style="display: block;">
+                        ⏹ Stop Process
+                    </button>
+                    <span id="processStatusText" style="color: var(--text-muted); font-size: 0.95rem; font-weight: 500;">Processing is active...</span>
+                </div>
+            </div>
+
+            <div class="activity-log glass-panel" id="activityLog">
+                <div style="color: var(--primary-light); font-weight: 600; margin-bottom: 1.2rem; font-size: 1rem; font-family: 'Inter', sans-serif;">Live Activity Log</div>
+            </div>
+        </div>
+    </form>
+
+    <!-- ================= REVIEW PAGE ================= -->
+    <div id="page-review" class="page-section">
+        <div class="review-panel glass-panel">
+            <div class="review-icon">🌅</div>
+            <h2 style="color: var(--text-main); margin-bottom: 1rem; font-size: 2.2rem; font-weight: 800;">Processing Complete</h2>
+            <p id="resultStats" style="font-size: 1.15rem; color: var(--text-muted); margin-bottom: 3rem; font-weight: 300;"></p>
+            
+            <div style="display: flex; justify-content: center; gap: 3rem; margin-bottom: 3rem; flex-wrap: wrap;">
+                <div style="text-align: center;">
+                    <div style="font-size: 3rem; font-weight: 300; color: var(--text-main); font-feature-settings: 'tnum';" id="reviewTotal">—</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; margin-top: 0.5rem;">Questions</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 3rem; font-weight: 300; color: var(--danger); font-feature-settings: 'tnum';" id="reviewErrors">—</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; margin-top: 0.5rem;">Errors</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 3rem; font-weight: 300; color: var(--primary-light); font-feature-settings: 'tnum';" id="reviewTime">—</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; margin-top: 0.5rem;">Time Taken</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 3rem; font-weight: 300; color: var(--info); font-feature-settings: 'tnum';" id="reviewTokens">—</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; margin-top: 0.5rem;">Tokens Used</div>
+                </div>
+            </div>
+
+            <div id="reviewMetaRow" style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 2.5rem; flex-wrap: wrap;">
+                <div style="background: rgba(0,0,0,0.03); padding: 0.6rem 1.2rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem;">
+                    <span style="color: var(--text-muted); font-weight: 500;">Model:</span>
+                    <span style="color: var(--text-main); font-weight: 600;" id="reviewModel">—</span>
+                </div>
+                <div style="background: rgba(0,0,0,0.03); padding: 0.6rem 1.2rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem;">
+                    <span style="color: var(--text-muted); font-weight: 500;">Cost:</span>
+                    <span style="color: var(--text-main); font-weight: 600;" id="reviewCost">—</span>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+                <a href="#" id="downloadLink" class="download-link">⬇️ Download Output File</a>
+                <button type="button" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; font-weight: 500; transition: color 0.3s ease;" onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'" onclick="resetApp()">Start New Process</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= HISTORY PAGE ================= -->
+    <div id="page-history" class="page-section">
+        <div class="panel glass-panel" style="min-height: 400px;">
+            <div class="panel-title" style="margin-bottom: 2rem;">🕒 Recent Jobs (Last 10 Days)</div>
+            
+            <div id="historyLoading" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                Loading history...
+            </div>
+            
+            <table id="historyTable" style="width: 100%; border-collapse: collapse; display: none;">
                 <thead>
-                    <tr style="background: #000080; color: white;">
-                        <th style="padding: 6px; border: 1px solid #cbd5e1;">A (Sr. No)</th>
-                        <th style="padding: 6px; border: 1px solid #cbd5e1;">B (Questions)</th>
-                        <th style="padding: 6px; border: 1px solid #cbd5e1;">C (Type)</th>
-                        <th style="padding: 6px; border: 1px solid #cbd5e1;">D (Response)</th>
-                        <th style="padding: 6px; border: 1px solid #cbd5e1;">E (Comments)</th>
+                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.08); color: var(--primary-light); text-align: left;">
+                        <th style="padding: 1rem; font-weight: 600;">Date Processed</th>
+                        <th style="padding: 1rem; font-weight: 600;">Filename</th>
+                        <th style="padding: 1rem; font-weight: 600; text-align: center;">Questions</th>
+                        <th style="padding: 1rem; font-weight: 600; text-align: center;">Time</th>
+                        <th style="padding: 1rem; font-weight: 600; text-align: center;">Model</th>
+                        <th style="padding: 1rem; font-weight: 600; text-align: right;">Action</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1;">1.1</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1;">Does the system support...</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1;">Single Choice</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1;">Comply</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1;">Existing context...</td>
-                    </tr>
+                <tbody id="historyTableBody">
+                    <!-- History rows will be injected here -->
                 </tbody>
             </table>
-        </div>
-
-        <form id="uploadForm">
-            <div class="form-row" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                <div style="flex: 1;">
-                    <label for="providerSelect" style="margin-bottom: 0.2rem;">API Provider</label>
-                    <select id="providerSelect" name="api_provider" style="width: 100%; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.4rem 0.5rem; color: var(--text-color); font-family: inherit; font-size: 0.85rem; height: 35px; min-height: auto; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
-                        <option value="gemini">Gemini</option>
-                        <option value="openai">OpenAI</option>
-                        <option value="claude">Claude (Anthropic)</option>
-                        <option value="openrouter">OpenRouter</option>
-                    </select>
-                </div>
-                
-                <div style="flex: 1;">
-                    <label for="apiKeyInput" style="margin-bottom: 0.2rem;">API Key</label>
-                    <input type="password" id="apiKeyInput" name="form_api_key" placeholder="Enter your API key..." required style="width: 100%; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.4rem 0.5rem; color: var(--text-color); font-family: inherit; font-size: 0.85rem; height: 35px; min-height: auto; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
-                </div>
-            </div>
-
-            <div class="form-row" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                <div style="flex: 1;">
-                    <label for="makerModelSelect" style="margin-bottom: 0.2rem;">Maker Agent Model</label>
-                    <select id="makerModelSelect" name="maker_model" style="width: 100%; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.4rem 0.5rem; color: var(--text-color); font-family: inherit; font-size: 0.85rem; height: 35px; min-height: auto; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
-                    </select>
-                </div>
-                
-                <div style="flex: 1;">
-                    <label for="reviewerModelSelect" style="margin-bottom: 0.2rem;">Reviewer Agent Model</label>
-                    <select id="reviewerModelSelect" name="reviewer_model" style="width: 100%; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.4rem 0.5rem; color: var(--text-color); font-family: inherit; font-size: 0.85rem; height: 35px; min-height: auto; transition: border-color 0.3s ease, box-shadow 0.3s ease;">
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>RFP Excel File</label>
-                <div class="file-upload-wrapper" id="dropZone">
-                    <div class="file-icon">📄</div>
-                    <span id="fileText">Drag & drop your .xlsx file here or click to browse</span>
-                    <input type="file" id="fileInput" name="file" accept=".xlsx" required>
-                    <div class="file-name" id="fileName"></div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="promptInput">Custom Instructions (Optional)</label>
-                <textarea id="promptInput" name="custom_prompt" placeholder="E.g., Prioritize concise answers, or provide special context for this specific RFP..."></textarea>
-            </div>
-
-            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                <button type="submit" id="submitBtn" style="margin-top: 0; flex: 1;">
-                    <span id="btnText">Process RFP</span>
-                    <div class="loader" id="loader"></div>
-                </button>
-                <button type="button" id="stopBtn" style="margin-top: 0; flex: 0.3; background: #64748b; display: none;">
-                    Stop
-                </button>
-            </div>
             
-            <div class="error-msg" id="errorMsg"></div>
-        </form>
-
-        <div id="result">
-            <p>Processing Complete!</p>
-            <p id="tokensUsed" style="color: var(--text-color); font-size: 1rem; margin-bottom: 1rem; font-weight: normal;"></p>
-            
-            <!-- Summary Table will be injected here -->
-            
-            <a href="#" id="downloadLink" class="download-btn">Download Output File</a>
+            <div id="historyEmpty" style="text-align: center; padding: 3rem; color: var(--text-muted); display: none;">
+                No processed files found in the last 10 days.
+            </div>
         </div>
     </div>
 
-    <script>
-        const form = document.getElementById('uploadForm');
-        const fileInput = document.getElementById('fileInput');
-        const dropZone = document.getElementById('dropZone');
-        const fileText = document.getElementById('fileText');
-        const fileName = document.getElementById('fileName');
-        const submitBtn = document.getElementById('submitBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const btnText = document.getElementById('btnText');
-        const loader = document.getElementById('loader');
-        const resultDiv = document.getElementById('result');
-        const downloadLink = document.getElementById('downloadLink');
-        const errorMsg = document.getElementById('errorMsg');
+</div>
+
+<script>
+    // --- Navigation Logic ---
+    function showPage(pageId) {
+        document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         
-        let currentTaskId = null;
+        document.getElementById('page-' + pageId).classList.add('active');
+        document.getElementById('nav-' + pageId).classList.add('active');
+        
+        if (pageId === 'history') {
+            loadHistory();
+        }
+        if (pageId === 'review') {
+            loadLastJob();
+        }
+    }
 
-        const modelsByProvider = {
-            gemini: [
-                { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (Default)' },
-                { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
-                { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
-                { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' }
-            ],
-            openai: [
-                { value: 'gpt-4o', label: 'GPT-4o (Default)' },
-                { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-                { value: 'o1-mini', label: 'o1 Mini' },
-                { value: 'o3-mini', label: 'o3 Mini' }
-            ],
-            claude: [
-                { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (Default)' },
-                { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku' },
-                { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' }
-            ],
-            openrouter: [
-                { value: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash (Free/Low Cost)' },
-                { value: 'deepseek/deepseek-chat', label: 'DeepSeek V3' },
-                { value: 'deepseek/deepseek-r1', label: 'DeepSeek R1' },
-                { value: 'poolside/laguna-m.1:free', label: 'Laguna M.1 (Free)' },
-                { value: 'nvidia/nemotron-3-super-120b-a12b:free', label: 'Nemotron 120B (Free)' },
-                { value: 'openrouter/owl-alpha', label: 'OWL Alpha (Free)' },
-                { value: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Llama 3.3 70B (Free)' },
-                { value: 'meta-llama/llama-3.1-8b-instruct:free', label: 'Llama 3.1 8B (Free)' },
-                { value: 'qwen/qwen-2.5-coder-32b-instruct:free', label: 'Qwen 2.5 Coder 32B (Free)' },
-                { value: 'google/gemini-2.5-flash-free', label: 'Gemini 2.5 Flash (Free)' },
-                { value: 'google/gemini-2.5-pro-free', label: 'Gemini 2.5 Pro (Free)' },
-                { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet' },
-                { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
-                { value: 'openai/gpt-4o', label: 'GPT-4o' }
-            ]
-        };
+    function resetApp() {
+        form.reset();
+        fileText.style.display = 'block';
+        fileName.textContent = '';
+        activityLog.innerHTML = '<div style="color: var(--primary-light); font-weight: 600; margin-bottom: 1.2rem; font-size: 1rem; font-family: \'Inter\', sans-serif;">Live Activity Log</div>';
+        showPage('setup');
+    }
 
-        const providerSelect = document.getElementById('providerSelect');
-        const makerModelSelect = document.getElementById('makerModelSelect');
-        const reviewerModelSelect = document.getElementById('reviewerModelSelect');
-
-        function updateModelDropdowns() {
-            const provider = providerSelect.value;
-            makerModelSelect.innerHTML = '';
-            reviewerModelSelect.innerHTML = '';
+    // --- History Logic ---
+    async function loadHistory() {
+        const loading = document.getElementById('historyLoading');
+        const table = document.getElementById('historyTable');
+        const tbody = document.getElementById('historyTableBody');
+        const empty = document.getElementById('historyEmpty');
+        
+        loading.style.display = 'block';
+        table.style.display = 'none';
+        empty.style.display = 'none';
+        
+        try {
+            const res = await fetch('/history');
+            const data = await res.json();
             
-            modelsByProvider[provider].forEach(model => {
-                makerModelSelect.add(new Option(model.label, model.value));
-                reviewerModelSelect.add(new Option(model.label, model.value));
-            });
-        }
+            loading.style.display = 'none';
+            
+            if (data.history && data.history.length > 0) {
+                tbody.innerHTML = '';
+                data.history.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
 
-        let abortController = null;
+                    const qCount = item.questions_processed != null ? item.questions_processed : '—';
+                    const timeTaken = item.time_taken != null ? `${item.time_taken}s` : '—';
+                    const model = item.maker_model ? item.maker_model.replace('gemini/', '').replace('openrouter/', '') : '—';
 
-        providerSelect.addEventListener('change', updateModelDropdowns);
-        updateModelDropdowns(); // Call once on load
-
-        stopBtn.addEventListener('click', () => {
-            if (abortController) {
-                abortController.abort();
-                btnText.textContent = 'Stopping...';
-                stopBtn.disabled = true;
-            }
-        });
-
-        // Drag and Drop functionality
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => {
-                dropZone.classList.add('dragover');
-            }, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => {
-                dropZone.classList.remove('dragover');
-            }, false);
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            let dt = e.dataTransfer;
-            let files = dt.files;
-            if(files.length) {
-                fileInput.files = files;
-                updateFileName();
-            }
-        }, false);
-
-        fileInput.addEventListener('change', updateFileName);
-
-        function updateFileName() {
-            if (fileInput.files.length > 0) {
-                fileText.style.display = 'none';
-                fileName.textContent = fileInput.files[0].name;
+                    tr.innerHTML = `
+                        <td style="padding: 1rem; color: var(--text-muted); font-size: 0.9rem;">${item.date}</td>
+                        <td style="padding: 1rem; color: var(--text-main); font-weight: 500; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.filename}">${item.filename}</td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <span style="background: rgba(217,70,239,0.08); color: var(--primary); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">${qCount}</span>
+                        </td>
+                        <td style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; font-feature-settings: 'tnum';">${timeTaken}</td>
+                        <td style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem; font-weight: 500;">${model}</td>
+                        <td style="padding: 1rem; text-align: right;">
+                            <a href="${item.download_url}" style="color: var(--primary-light); text-decoration: none; font-size: 0.9rem; font-weight: 600; padding: 0.5rem 1rem; border: 1px solid rgba(232, 28, 255, 0.3); border-radius: var(--radius-sm); transition: all 0.3s ease;">Download</a>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                table.style.display = 'table';
             } else {
-                fileText.style.display = 'block';
-                fileName.textContent = '';
+                empty.style.display = 'block';
             }
+        } catch (err) {
+            console.error("Failed to load history:", err);
+            loading.textContent = "Failed to load history.";
+        }
+    }
+
+    // Hook up nav clicks
+    document.getElementById('nav-setup').addEventListener('click', () => showPage('setup'));
+    document.getElementById('nav-process').addEventListener('click', () => showPage('process'));
+    document.getElementById('nav-review').addEventListener('click', () => showPage('review'));
+    document.getElementById('nav-history').addEventListener('click', () => showPage('history'));
+
+    // --- DOM Elements ---
+    const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const fileText = document.getElementById('fileText');
+    const fileName = document.getElementById('fileName');
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const processStatusText = document.getElementById('processStatusText');
+    
+    const statTotal = document.getElementById('statTotal');
+    const statComplete = document.getElementById('statComplete');
+    const statErrors = document.getElementById('statErrors');
+    const statRemaining = document.getElementById('statRemaining');
+    const statEta = document.getElementById('statEta');
+    
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const activityLog = document.getElementById('activityLog');
+    
+    const resultStats = document.getElementById('resultStats');
+    const downloadLink = document.getElementById('downloadLink');
+
+    let abortController = null;
+    let startTime = 0;
+
+    function addLog(msg, color="var(--text-main)") {
+        const time = new Date().toLocaleTimeString();
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.innerHTML = `<span class="log-time">[${time}]</span><span style="color: ${color}">${msg}</span>`;
+        activityLog.appendChild(div);
+        activityLog.scrollTop = activityLog.scrollHeight;
+    }
+
+    // Models config
+    const modelsByProvider = {
+        gemini: [
+            { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Default)' },
+            { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' }
+        ],
+        openai: [
+            { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Default)' },
+            { value: 'gpt-4o', label: 'GPT-4o' }
+        ],
+        claude: [
+            { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (Default)' }
+        ],
+        openrouter: [
+            { value: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash' },
+            { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet' }
+        ]
+    };
+
+    const providerSelect = document.getElementById('providerSelect');
+    const makerModelSelect = document.getElementById('makerModelSelect');
+    const reviewerModelSelect = document.getElementById('reviewerModelSelect');
+
+    function updateModelDropdowns() {
+        const provider = providerSelect.value;
+        makerModelSelect.innerHTML = '';
+        reviewerModelSelect.innerHTML = '';
+        modelsByProvider[provider].forEach(model => {
+            makerModelSelect.add(new Option(model.label, model.value));
+            reviewerModelSelect.add(new Option(model.label, model.value));
+        });
+    }
+    providerSelect.addEventListener('change', updateModelDropdowns);
+    updateModelDropdowns();
+
+    // Drag and Drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eName => {
+        dropZone.addEventListener(eName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+    ['dragenter', 'dragover'].forEach(eName => dropZone.addEventListener(eName, () => dropZone.classList.add('dragover'), false));
+    ['dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, () => dropZone.classList.remove('dragover'), false));
+
+    dropZone.addEventListener('drop', (e) => {
+        if(e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileName();
+        }
+    }, false);
+    fileInput.addEventListener('change', updateFileName);
+
+    function updateFileName() {
+        if (fileInput.files.length > 0) {
+            fileText.style.display = 'none';
+            fileName.textContent = fileInput.files[0].name;
+            addLog(`Loaded file: ${fileInput.files[0].name}`, "var(--primary-light)");
+        }
+    }
+
+    // Processing Logic
+    function formatETA(seconds) {
+        if (seconds <= 0 || isNaN(seconds)) return "--:--";
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return `${m}m ${s}s`;
+    }
+
+    stopBtn.addEventListener('click', () => {
+        if (abortController) {
+            abortController.abort();
+            addLog("Processing aborted by user.", "var(--danger)");
+            stopBtn.style.display = 'none';
+            processStatusText.textContent = "Process stopped.";
+        }
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!fileInput.files.length) {
+            alert("Please select an Excel file.");
+            return;
         }
 
-        // Form Submission
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            if (!fileInput.files.length) {
-                showError("Please select an Excel file.");
+        // Shift to process page
+        showPage('process');
+        
+        stopBtn.style.display = 'block';
+        processStatusText.textContent = "Processing is active...";
+        
+        statTotal.textContent = '0';
+        statComplete.textContent = '0';
+        statErrors.textContent = '0';
+        statRemaining.textContent = '0';
+        statEta.textContent = '--:--';
+        progressBar.style.width = '0%';
+        progressText.textContent = '0% (0 / 0)';
+        
+        addLog("Starting upload and processing...");
+        startTime = Date.now();
+
+        const formData = new FormData(form);
+        abortController = new AbortController();
+
+        try {
+            const response = await fetch('/process', {
+                method: 'POST',
+                body: formData,
+                signal: abortController.signal
+            });
+
+            if (!response.ok) {
+                addLog("Server error occurred.", "var(--danger)");
+                stopBtn.style.display = 'none';
+                processStatusText.textContent = "Error occurred.";
                 return;
             }
 
-            // UI State loading
-            submitBtn.disabled = true;
-            btnText.textContent = 'Processing (This may take a while)...';
-            loader.style.display = 'block';
-            resultDiv.style.display = 'none';
-            errorMsg.style.display = 'none';
-
-            const formData = new FormData(form);
-            abortController = new AbortController();
-
-            try {
-                const response = await fetch('/process', {
-                    method: 'POST',
-                    body: formData,
-                    signal: abortController.signal
-                });
-
-                if (!response.ok) {
-                    showError("An error occurred during upload or processing.");
-                    restoreUI();
-                    return;
-                }
-
-                stopBtn.style.display = 'block';
-                stopBtn.disabled = false;
-
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let finalErrors = 0;
+            let currentDownloadUrl = '';
+            let currentFilename = '';
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
                 
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    const chunks = decoder.decode(value, {stream: true}).split('\n');
-                    for (const chunk of chunks) {
-                        if (!chunk.trim()) continue;
-                        try {
-                            const statusData = JSON.parse(chunk);
-                            
-                            if (statusData.status === 'processing') {
-                                btnText.textContent = `Processing... (${statusData.progress || 0}%)`;
-                            } else if (statusData.status === 'completed') {
-                                downloadLink.href = statusData.download_url;
-                                downloadLink.download = statusData.filename;
-                                btnText.textContent = 'Processing Complete (100%)';
-                                
-                                let highConf = 0, medConf = 0, lowConf = 0;
-                                if (statusData.results) {
-                                    for (const rowNum in statusData.results) {
-                                        const conf = statusData.results[rowNum].confidence;
-                                        if (conf === 'high') highConf++;
-                                        else if (conf === 'medium') medConf++;
-                                        else lowConf++;
-                                    }
-                                }
-
-                                const tokensElement = document.getElementById('tokensUsed');
-                                if (tokensElement) {
-                                    tokensElement.innerHTML = `
-                                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; background: #fff; padding: 1.5rem; border-radius: 8px; border: 1px solid #cbd5e1; text-align: left;">
-                                            <div style="grid-column: span 2; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; font-weight: bold; color: var(--primary);">Processing Summary</div>
-                                            
-                                            <div><strong>Maker Model:</strong> ${statusData.maker_model || 'Unknown'}</div>
-                                            <div><strong>Reviewer Model:</strong> ${statusData.reviewer_model || 'Unknown'}</div>
-
-                                            <div><strong>Questions Processed:</strong> ${statusData.questions_processed || 0}</div>
-                                            <div><strong>Total Tokens:</strong> ${statusData.total_tokens || 0}</div>
-                                            
-                                            <div><strong>High Confidence:</strong> <span style="color: #10b981;">${highConf}</span></div>
-                                            <div><strong>Time Taken:</strong> ${statusData.time_taken || 0} seconds</div>
-                                            
-                                            <div><strong>Medium Confidence:</strong> <span style="color: #f59e0b;">${medConf}</span></div>
-                                            <div style="color: #059669; font-size: 1.1em;"><strong>Est. Cost:</strong> $${statusData.cost_incurred || 0}</div>
-                                            
-                                            <div><strong>Low Confidence:</strong> <span style="color: #ef4444;">${lowConf}</span></div>
-                                        </div>
-                                    `;
-                                }
-                                
-                                resultDiv.style.display = 'block';
-                                restoreUI();
-                                return;
-                            } else if (statusData.status === 'error') {
-                                showError(statusData.error || "An error occurred during processing.");
-                                restoreUI();
-                                return;
+                const chunks = decoder.decode(value, {stream: true}).split('\n');
+                for (const chunk of chunks) {
+                    if (!chunk.trim()) continue;
+                    try {
+                        const statusData = JSON.parse(chunk);
+                        
+                        if (statusData.status === 'processing') {
+                            if (statusData.download_url) {
+                                currentDownloadUrl = statusData.download_url;
+                                currentFilename = statusData.filename;
                             }
-                        } catch(e) {
-                            // Ignore JSON parse errors for incomplete chunks
+                            const c = statusData.current || 0;
+                            const t = statusData.total || 0;
+                            finalErrors = statusData.errors || 0;
+                            const rem = t - c;
+                            const pct = t > 0 ? Math.round((c/t)*100) : 0;
+                            
+                            statTotal.textContent = t;
+                            statComplete.textContent = c;
+                            statErrors.textContent = finalErrors;
+                            statRemaining.textContent = rem;
+                            
+                            // Calculate ETA
+                            if (c > 0) {
+                                const elapsedSecs = (Date.now() - startTime) / 1000;
+                                const timePerQ = elapsedSecs / c;
+                                const etaSecs = timePerQ * rem;
+                                statEta.textContent = formatETA(etaSecs);
+                            }
+
+                            progressBar.style.width = `${pct}%`;
+                            progressText.textContent = `${pct}% (${c} / ${t})`;
+                            
+                        } else if (statusData.status === 'completed') {
+                            // Populate review stats from stream data
+                            _populateReview({
+                                questions_processed: statusData.questions_processed,
+                                errors: statusData.errors || finalErrors,
+                                time_taken: statusData.time_taken,
+                                total_tokens: statusData.total_tokens,
+                                maker_model: statusData.maker_model,
+                                cost_incurred: statusData.cost_incurred,
+                                download_url: statusData.download_url,
+                                filename: statusData.filename,
+                            });
+                            
+                            addLog("Processing completed successfully.", "var(--success)");
+                            return;
+                            
+                        } else if (statusData.status === 'error') {
+                            addLog(`Error: ${statusData.error}`, "var(--danger)");
+                            stopBtn.style.display = 'none';
+                            processStatusText.textContent = "Process stopped due to error.";
+                            return;
                         }
-                    }
+                    } catch(e) { }
                 }
-            } catch (err) {
-                if (err.name === 'AbortError') {
-                    showError("Processing stopped by user.");
-                } else {
-                    showError("Network error during processing. Please try again.");
-                    console.error(err);
-                }
-                restoreUI();
             }
-        });
-
-        function restoreUI() {
-            submitBtn.disabled = false;
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                addLog(`Network error: ${err.message}`, "var(--danger)");
+            } else {
+                if (currentDownloadUrl) {
+                    showPage('review');
+                    downloadLink.href = currentDownloadUrl;
+                    downloadLink.download = currentFilename;
+                    document.getElementById('reviewTotal').textContent = statComplete.textContent;
+                    document.getElementById('reviewErrors').textContent = statErrors.textContent;
+                    document.getElementById('reviewTime').textContent = "Partial";
+                    resultStats.innerHTML = `Process stopped. <b style="color:var(--danger);">Partial results</b> were safely recovered.`;
+                }
+            }
             stopBtn.style.display = 'none';
-            currentTaskId = null;
-            if (btnText.textContent.indexOf('Complete') === -1) {
-                btnText.textContent = 'Process RFP';
-            }
-            loader.style.display = 'none';
+        }
+    });
+
+    // --- Review Page Helpers ---
+    function _formatTokens(n) {
+        if (n == null || n === 0) return '—';
+        if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+        if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+        return String(n);
+    }
+
+    function _populateReview(data) {
+        // Mark that live data was received so loadLastJob doesn't overwrite
+        _lastJobLoaded = true;
+
+        // Navigate to review page
+        showPage('review');
+
+        // Stats
+        document.getElementById('reviewTotal').textContent = data.questions_processed ?? '—';
+        document.getElementById('reviewErrors').textContent = data.errors ?? 0;
+        document.getElementById('reviewTime').textContent = data.time_taken != null ? `${data.time_taken}s` : '—';
+        document.getElementById('reviewTokens').textContent = _formatTokens(data.total_tokens);
+
+        // Meta row
+        const modelName = (data.maker_model || '—').replace('gemini/', '').replace('openrouter/', '');
+        document.getElementById('reviewModel').textContent = modelName;
+        document.getElementById('reviewCost').textContent = data.cost_incurred ?? '—';
+
+        // Download link
+        if (data.download_url) {
+            downloadLink.href = data.download_url;
+            downloadLink.download = data.filename || '';
+            downloadLink.style.display = 'inline-flex';
         }
 
-        function showError(msg) {
-            errorMsg.textContent = msg;
-            errorMsg.style.display = 'block';
+        // Summary text
+        if (data.questions_processed) {
+            resultStats.innerHTML = `Successfully processed <b style="color:var(--text-main);">${data.questions_processed}</b> compliance queries using <b style="color:var(--text-main);">${modelName}</b> in <b style="color:var(--text-main);">${data.time_taken}s</b>.`;
         }
-    </script>
+    }
+
+    let _lastJobLoaded = false;
+    async function loadLastJob() {
+        // Only auto-load from server if the review page hasn't been populated by a live stream
+        if (_lastJobLoaded) return;
+        try {
+            const res = await fetch('/last-job');
+            const data = await res.json();
+            if (data && data.filename) {
+                document.getElementById('reviewTotal').textContent = data.questions_processed ?? '—';
+                document.getElementById('reviewErrors').textContent = data.errors ?? 0;
+                document.getElementById('reviewTime').textContent = data.time_taken != null ? `${data.time_taken}s` : '—';
+                document.getElementById('reviewTokens').textContent = _formatTokens(data.total_tokens);
+
+                const modelName = (data.maker_model || '—').replace('gemini/', '').replace('openrouter/', '');
+                document.getElementById('reviewModel').textContent = modelName;
+                document.getElementById('reviewCost').textContent = data.cost_incurred ?? '—';
+
+                downloadLink.href = data.download_url;
+                downloadLink.download = data.filename;
+                downloadLink.style.display = 'inline-flex';
+
+                resultStats.innerHTML = `Last job processed <b style="color:var(--text-main);">${data.questions_processed}</b> compliance queries using <b style="color:var(--text-main);">${modelName}</b> in <b style="color:var(--text-main);">${data.time_taken}s</b>.`;
+            }
+        } catch (err) {
+            console.error("Failed to load last job:", err);
+        }
+    }
+
+</script>
 </body>
 </html>

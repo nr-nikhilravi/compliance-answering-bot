@@ -76,8 +76,10 @@ class MakerAgent:
         vendor: object,
         customer: object,
         provider: str = "gemini",
+        custom_instructions: str = "",
     ):
         self._api_key = api_key
+        self._custom_instructions = custom_instructions or ""
         
         # Add provider prefix for litellm
         if provider == "gemini" and not model.startswith("gemini/"):
@@ -98,12 +100,21 @@ class MakerAgent:
         question: str,
         question_type: str,
         chunks: list[RetrievedChunk],
+        existing_answer: str = "",
     ) -> tuple[MakerOutput, int]:
         """Return (MakerOutput, tokens_used)."""
         context = _format_context(chunks)
+        custom_block = ""
+        if self._custom_instructions:
+            custom_block = (
+                f"CUSTOM INSTRUCTIONS (HIGH PRIORITY — follow these closely):\n"
+                f"{self._custom_instructions}\n\n"
+            )
         user_msg = (
+            f"{custom_block}"
             f"QUESTION TYPE: {question_type}\n\n"
             f"RFP QUESTION:\n{question}\n\n"
+            f"EXISTING ANSWER:\n{existing_answer}\n\n"
             f"RETRIEVED CONTEXT:\n{context}"
         )
         response = call_llm_with_retries(
@@ -113,6 +124,7 @@ class MakerAgent:
                 {"role": "system", "content": self._system_prompt},
                 {"role": "user",   "content": user_msg},
             ],
+            response_format={"type": "json_object"},
         )
         raw = response.choices[0].message.content or ""
         tokens = response.usage.total_tokens if hasattr(response, "usage") and response.usage else 0
@@ -130,6 +142,7 @@ class MakerAgent:
                     {"role": "assistant", "content": raw},
                     {"role": "user", "content": "Your previous output was not valid JSON matching the required schema. Please output ONLY the JSON object, no markdown fences, no extra text."},
                 ],
+                response_format={"type": "json_object"},
             )
             raw = retry_response.choices[0].message.content or ""
             tokens += retry_response.usage.total_tokens if hasattr(retry_response, "usage") and retry_response.usage else 0
@@ -154,18 +167,32 @@ class MakerAgent:
         chunks: list[RetrievedChunk],
         previous_draft: MakerOutput,
         issues: list[str],
+        existing_answer: str = "",
     ) -> tuple[MakerOutput, int]:
         """Revise a draft given reviewer issues (called at most ONCE)."""
         context = _format_context(chunks)
         issues_bulleted = "\n".join(f"- {iss}" for iss in issues)
+        custom_note = ""
+        if self._custom_instructions:
+            custom_note = (
+                f"\n\nCUSTOM INSTRUCTIONS (HIGH PRIORITY — continue following these):\n"
+                f"{self._custom_instructions}\n"
+            )
         revision_suffix = (
             f"\n\nYour previous draft was reviewed and the reviewer flagged these issues:\n\n"
             f"{issues_bulleted}\n\n"
             f"Revise your answer to address each issue. Stay grounded in the provided context. "
             f"If you cannot address an issue without inventing facts, instead set needs_review=true "
-            f"and explain what the SME should clarify.\n\nOutput the same JSON format as before."
+            f"and explain what the SME should clarify.{custom_note}\n\nOutput the same JSON format as before."
         )
+        custom_block = ""
+        if self._custom_instructions:
+            custom_block = (
+                f"CUSTOM INSTRUCTIONS (HIGH PRIORITY — follow these closely):\n"
+                f"{self._custom_instructions}\n\n"
+            )
         user_msg = (
+            f"{custom_block}"
             f"QUESTION TYPE: {question_type}\n\n"
             f"RFP QUESTION:\n{question}\n\n"
             f"RETRIEVED CONTEXT:\n{context}"
@@ -179,6 +206,7 @@ class MakerAgent:
                 {"role": "assistant", "content": previous_draft.model_dump_json()},
                 {"role": "user",      "content": revision_suffix},
             ],
+            response_format={"type": "json_object"},
         )
         raw = response.choices[0].message.content or ""
         tokens = response.usage.total_tokens if hasattr(response, "usage") and response.usage else 0
@@ -215,6 +243,7 @@ CRITICAL RULES:
 7. Confidence: "high" only when source directly answers; "medium" if partial coverage; "low" if stretching.
 8. Length: 2-5 sentences typical. Up to a paragraph for technical-architecture questions. Prose only — no bullets, no markdown formatting in answer_text. Ensure that the answer_text is NOT more than 2000 characters.
 9. Product Naming: Do not use the words 'AINEXT' or 'LOYALTYNEXT' as they are not available. The platform is 'BUSINESSNEXT' and products include 'CRMNEXT', 'LENDINGNEXT', 'DATANEXT' and 'MARKETINGNEXT'.
+10. If the user provides an 'EXISTING ANSWER', evaluate if it is fully accurate based on the context. If it is accurate and complete, simply output the existing answer text. If it is inaccurate or missing details, write a new one.
 
 OUTPUT (strict JSON, no markdown fences):
 {

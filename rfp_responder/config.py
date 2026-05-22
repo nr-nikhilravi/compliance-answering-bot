@@ -65,9 +65,9 @@ class ModelsConfig:
 
 @dataclass
 class RetrievalConfig:
-    top_k: int = 10
+    top_k: int = 5
     low_threshold: float = 0.30
-    high_threshold: float = 0.75
+    high_threshold: float = 0.65
 
 
 @dataclass

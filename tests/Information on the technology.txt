@@ -1,0 +1,33 @@
+ Frontend Technologies
+The frontend is intentionally lightweight and dependency-free, avoiding heavy frameworks to ensure fast load times and a premium custom aesthetic.
+
+HTML5: Used for the semantic structure of the multi-page interface (Setup, Process, Review stages).
+Vanilla CSS3:
+Reason: Rather than relying on Tailwind or Bootstrap, the interface uses pure custom CSS to achieve a highly tailored, premium "glassmorphism" design.
+Features Used: CSS Grid and Flexbox for responsive layouts, CSS variables (:root) for easy theming (like the soft coral/pink sunrise palette), backdrop filters (backdrop-filter: blur) for the glass panels, and complex CSS keyframe animations (for the floating background orbs and progress bars).
+Vanilla JavaScript (ES6+):
+Reason: Used to handle all client-side logic without the overhead of React or Vue.
+Features Used: It utilizes modern Web APIs like FormData for file uploads, custom drag-and-drop event listeners for the file upload zone, DOM manipulation for real-time progress updates, and the AbortController API to allow users to instantly stop background processing tasks. It also parses the incoming NDJSON stream from the backend to populate the live activity log.
+⚙️ Backend Technologies
+The backend is entirely Python-based, optimized for heavy asynchronous ML/AI workloads.
+
+Programming Language: Python 3.10+
+Reason: Python is the undisputed industry standard for AI, Machine Learning, and handling robust document processing pipelines.
+Web Framework: FastAPI
+Reason: Chosen over Flask or Django for its incredibly high performance and native asynchronous (async/await) support. It easily handles streaming responses (StreamingResponse), which is critical for keeping the UI updated during long-running tasks without the connection timing out.
+ASGI Server: Uvicorn
+Reason: Required to serve the asynchronous FastAPI application.
+Templating Engine: Jinja2
+Reason: Used by FastAPI to serve the index.html file to the user upon visiting the root route (/).
+Concurrency (asyncio & threading):
+Reason: As seen in web.py, heavy RFP processing tasks are pushed into a background worker thread (threading.Thread) alongside an asyncio.Queue. This architecture prevents HTTP request timeouts (especially vital for serverless environments like Google Cloud Run) by immediately returning a live stream of status updates to the frontend instead of waiting for the entire Excel file to finish processing.
+🧠 AI, ML, & Data Processing Libraries
+LLM SDKs (google-genai, openai, litellm):
+Reason: The application features a multi-provider "Maker-Reviewer" agentic architecture. These libraries allow the app to interface with various models like Gemini 2.5 Pro, GPT-4o, Claude 3.5 Sonnet, and DeepSeek via OpenRouter, handling everything from generating embeddings to cross-checking responses.
+Data Validation (pydantic):
+Reason: Enforces strict typing and JSON schemas. This is heavily used to force LLMs to output exactly what is needed (e.g., Confidence scores, single-choice values) and prevents AI hallucinations from breaking the application.
+Document I/O (openpyxl, pypdf, python-docx):
+Reason: openpyxl is crucial for parsing the complex, multi-column input RFP Excel files and safely writing the answers back to a new .xlsx file without destroying the user's original spreadsheet formatting or formulas. pypdf and python-docx are used to extract text chunks from the client's knowledge base.
+☁️ Deployment & Infrastructure
+Containerization: Docker
+Reason: The provided Dockerfile uses a lightweight python:3.10-slim image. It containerizes the entire environment (handling requirements.txt and ensuring necessary directories like .rag_cache exist). It dynamically binds to the $PORT environment variable, making the application stateless and perfectly optimized for autoscaling cloud environments like Google Cloud Run.

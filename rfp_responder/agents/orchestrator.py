@@ -39,6 +39,7 @@ class Orchestrator:
         question_type: str,
         chunks: list[RetrievedChunk],
         retrieved_source_names: set[str],
+        existing_answer: str = "",
     ) -> OrchestratorResult:
         """
         Run the full maker-reviewer pipeline for one question.
@@ -50,7 +51,7 @@ class Orchestrator:
         tokens_used = 0
 
         # --- Step 1: Maker draft ---
-        draft, tok = self._maker.draft(question, question_type, chunks)
+        draft, tok = self._maker.draft(question, question_type, chunks, existing_answer)
         tokens_used += tok
 
         # Cross-validate sources_used against actually-retrieved docs
@@ -88,7 +89,11 @@ class Orchestrator:
             )
 
         # --- Step 4: Call reviewer ---
-        review, tok = self._reviewer.review(question, chunks, draft)
+        # Filter chunks to only those used by the Maker to save tokens
+        used_chunks = [c for c in chunks if c.chunk.source in draft.sources_used]
+        reviewer_chunks = used_chunks if used_chunks else chunks
+        
+        review, tok = self._reviewer.review(question, reviewer_chunks, draft)
         tokens_used += tok
         logger.debug("Reviewer verdict: %s | issues: %s", review.verdict, review.issues)
 
@@ -119,7 +124,7 @@ class Orchestrator:
             )
 
         revised, tok = self._maker.revise(
-            question, question_type, chunks, draft, review.issues
+            question, question_type, chunks, draft, review.issues, existing_answer
         )
         tokens_used += tok
         revised = self._validate_sources(revised, retrieved_source_names, chunks)

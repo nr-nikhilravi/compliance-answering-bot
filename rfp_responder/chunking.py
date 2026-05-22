@@ -20,8 +20,8 @@ class TextChunk:
 
 
 # Approx tokens → chars: 1 token ≈ 4 chars
-_CHUNK_SIZE_CHARS  = 3_200   # ~800 tokens
-_OVERLAP_CHARS     = 800     # ~200 tokens
+_CHUNK_SIZE_CHARS  = 2_000   # ~500 tokens
+_OVERLAP_CHARS     = 400     # ~100 tokens
 _MIN_CHUNK_CHARS   = 100
 
 

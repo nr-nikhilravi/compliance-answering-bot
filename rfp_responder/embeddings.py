@@ -76,6 +76,13 @@ class EmbeddingClient:
                         vecs = [data.embedding for data in result.data]
                     all_vecs.extend(vecs)
                     break
+                except OSError as exc:
+                    if attempts < 6:
+                        sleep = 5 * attempts
+                        logger.warning("OS-level error in embed_texts (attempt %d/6): %s. Retrying in %ds...", attempts, exc, sleep)
+                        time.sleep(sleep)
+                    else:
+                        raise
                 except Exception as exc:
                     if attempts < 4:
                         time.sleep(2)
@@ -104,6 +111,13 @@ class EmbeddingClient:
                         raise ValueError("No data in response")
                     vec = np.array(result.data[0].embedding, dtype=np.float32)
                 return _l2_normalize(vec.reshape(1, -1))[0]
+            except OSError as exc:
+                if attempts < 6:
+                    sleep = 5 * attempts
+                    logger.warning("OS-level error in embed_query (attempt %d/6): %s. Retrying in %ds...", attempts, exc, sleep)
+                    time.sleep(sleep)
+                else:
+                    raise
             except Exception as exc:
                 if attempts < 4:
                     time.sleep(2)
@@ -136,6 +150,11 @@ class EmbeddingCache:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
+
+    def get_cached(self, corpus_dir: Path, chunk_size: int, overlap: int) -> Optional[tuple[list[TextChunk], np.ndarray]]:
+        """Check if cache exists and return it, otherwise return None."""
+        cache_key = self._compute_key(corpus_dir, chunk_size, overlap)
+        return self._try_load(cache_key)
 
     def get_or_build(
         self,
@@ -253,6 +272,15 @@ class EmbeddingCache:
                         vecs = [data.embedding for data in result.data]
                     all_vecs.extend(vecs)
                     break
+                except OSError as exc:  # noqa: BLE001
+                    # Windows socket errors (Errno 22, etc.) under concurrent load
+                    if attempts < 6:
+                        sleep = 5 * attempts
+                        logger.warning("OS-level error in _embed_chunks (attempt %d/6): %s. Retrying in %ds...", attempts, exc, sleep)
+                        time.sleep(sleep)
+                    else:
+                        logger.error("_embed_chunks OS error failed permanently: %s", exc)
+                        raise
                 except Exception as exc:  # noqa: BLE001
                     exc_str = str(exc)
                     if "429" in exc_str or "quota" in exc_str.lower() or "rate" in exc_str.lower():
